@@ -1,0 +1,54 @@
+{
+  "supplier": [
+    "supplier",
+    "supply",
+    "supplies",
+    "vendor",
+    "provider",
+    "source",
+    "sourcing"
+  ],
+  "manufacturer": [
+    "manufacturer",
+    "manufacture",
+    "manufacturing",
+    "maker",
+    "producer",
+    "produce",
+    "production"
+  ],
+  "distributor": [
+    "distributor",
+    "distribute",
+    "distribution",
+    "reseller",
+    "wholesaler"
+  ],
+  "retailer": [
+    "retailer",
+    "retail",
+    "seller",
+    "store",
+    "shop"
+  ],
+  "buyer": [
+    "buyer",
+    "buy",
+    "purchaser",
+    "customer",
+    "client"
+  ],
+  "competitor": [
+    "competitor",
+    "competing",
+    "compete",
+    "rival",
+    "alternative to"
+  ],
+  "service_provider": [
+    "service provider",
+    "provider",
+    "services",
+    "offering services"
+  ]
+}

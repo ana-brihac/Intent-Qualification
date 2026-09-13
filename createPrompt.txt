@@ -1,0 +1,10 @@
+You are working on a machine learning algorithm that needs a JSON file with synonyms, so it can detect
+when a user query implies a specific field or role.
+You need to create a JSON file, so the output should be the content of a JSON file.
+You need to populate the file with synonyms for the following keys: {keys}. Use exactly these keys, and
+only these, as the top-level keys of the JSON, one list of synonyms for each.
+Only add synonyms that a person could plausibly type in a real search query, avoid words that are too
+generic or that could match unrelated things.
+The output should look like this, as an example of the structure: {"key_name": ["synonym1", "synonym2", "synonym3"]}.
+Don't forget, the output should be just the content of the JSON file, nothing beside this, no explanations,
+no markdown formatting, no backticks, nothing else added, because this will go directly in the file!

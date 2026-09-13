@@ -1,0 +1,11 @@
+You are working on a machine learning algorithm that needs a JSON file with synonyms, so it can detect
+when a user query implies a specific field or role.
+You need to extend a JSON file, so the output should be the content of a JSON file.
+Read the content of the file from this, {fileContent}, very carefully to get an idea of the file and the task.
+You need to review the synonyms that are listed in the file and add more if you feel that is necessary,
+but only add synonyms that a person could plausibly type in a real search query, avoid words that are too
+generic or that could match unrelated things.
+Do not remove, rename, or reword any of the existing entries, and do not change the existing keys, only add
+new synonyms to the lists that are already there.
+Don't forget, the output should be just the content of the JSON file, nothing beside this, no explanations,
+no markdown formatting, no backticks, nothing else added, because this will go directly in the file!

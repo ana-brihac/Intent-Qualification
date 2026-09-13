@@ -1,0 +1,53 @@
+{
+  "employee_count": [
+    "employees",
+    "employee",
+    "staff",
+    "headcount",
+    "workforce",
+    "team size",
+    "people working",
+    "number of employees"
+  ],
+  "revenue": [
+    "revenue",
+    "earnings",
+    "sales",
+    "turnover",
+    "income",
+    "profitable",
+    "profitability",
+    "annual revenue"
+  ],
+  "is_public": [
+    "public",
+    "publicly traded",
+    "listed",
+    "listed company",
+    "stock exchange",
+    "public company",
+    "publicly listed"
+  ],
+  "year_founded": [
+    "founded",
+    "established",
+    "started",
+    "launched",
+    "incorporated",
+    "since",
+    "founded in",
+    "startup"
+  ],
+  "address": [
+    "location",
+    "located",
+    "based in",
+    "headquartered",
+    "headquarters",
+    "situated",
+    "operating in",
+    "in",
+    "country",
+    "city"
+  ]
+}
