@@ -49,7 +49,8 @@ a JSON file, and it gets loaded into a hash table in memory when we run the prog
 - **synonyms.py:** containt the script for the role and field tables verification and extansion. Just one script for both, because the task has the same purpose.
 - **fields.json:** contains the synonyms of the fields, but not all of them, just the ones that make sense. For example, operational_name and website are identifier fields, so we are not going to use synonyms for them in this file.
 - **roles.json:** the JSON file where the script will add the role synonyms for each company.
-- **expandPrompt.txt & createPropmpt.txt:** containt the prompts for the LLM from synonyms.py
+- **expandPrompt.txt & createPropmpt.txt:** contains the prompts for the LLM from synonyms.py
+- **populatePrompt.txt:** contains the prompts for the LLM from companies-population.py
 
 ### User input processing
 
