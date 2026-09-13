@@ -57,7 +57,7 @@ def expand(fileContent):
 	try:
 		jason = json.loads(interaction.output_text)
 	except json.JSONDecodeError:
-		print(f"Failed to parse JSON response for keys: {keys}")
+		print(f"Failed to parse JSON response for keys: {fileContent}")
 		print(interaction.output_text)
 		raise
 	return jason
