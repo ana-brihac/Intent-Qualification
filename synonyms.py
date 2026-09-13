@@ -17,26 +17,26 @@ def start(fname, keys):
 		with open(fname, "r") as f:
 			fileContent = f.read()
 
-		output = expand(fileContent)
+		output=expand(fileContent)
 	else:
-		output = create(keys)
+		output=create(keys)
   
 	with open(fname, "w") as f:
 			f.write(json.dumps(output, indent=2))
 		
 def create(keys):
 	with open("createPrompt.txt", "r") as f:
-		content = f.read()
+		content=f.read()
   
-	content = content.replace("{keys}", keys)
+	content=content.replace("{keys}", keys)
   
-	interaction = client.interactions.create(
-			model = "gemini-3.8-flash",
-			input = content
+	interaction=client.interactions.create(
+			model="gemini-3.8-flash",
+			input=content
 		)
 	
 	try:
-		jason = json.loads(interaction.output_text)
+		jason=json.loads(interaction.output_text)
 	except json.JSONDecodeError:
 		print(f"Failed to parse JSON response for keys: {keys}")
 		print(interaction.output_text)
@@ -45,17 +45,17 @@ def create(keys):
 
 def expand(fileContent):
 	with open("expandPrompt.txt", "r") as f:
-		content = f.read()
+		content=f.read()
 
-	content = content.replace("{fileContent}", fileContent)
+	content=content.replace("{fileContent}", fileContent)
 
-	interaction = client.interactions.create(
-		model = "gemini-3.8-flash",
-		input = content
+	interaction=client.interactions.create(
+		model="gemini-3.8-flash",
+		input=content
 	)
 
 	try:
-		jason = json.loads(interaction.output_text)
+		jason=json.loads(interaction.output_text)
 	except json.JSONDecodeError:
 		print(f"Failed to parse JSON response for keys: {fileContent}")
 		print(interaction.output_text)
