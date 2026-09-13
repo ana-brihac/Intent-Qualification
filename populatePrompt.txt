@@ -1,0 +1,17 @@
+You are working on a machine learning algorithm that needs a database populated with more descriptive
+data, so it can detect when a user query implies a specific field or role.
+The python code will parse the data for the database from a JSON file, so the output should be the content of a JSON file.
+The structure of the JSON file that you will output should be like this: {"enriched_description": "", "role": ""}.
+enriched_description should be a single block of text, not a list. role should be a comma-separated string
+if the company has more than one role, for example "manufacturer,retailer".
+Here is the company's data, read it carefully to get an idea of the company and the task: {company}.
+You have 2 todo's to accomplish for this task.
+1. Read the company description and assign a role to the firm. The role is a label a company needs, whether
+it acts as a supplier, manufacturer, distributor, buyer, competitor, etc., in relation to whatever the query is asking about.
+Only choose from this fixed list of roles, do not invent new ones: supplier, manufacturer, distributor,
+retailer, buyer, competitor, service_provider. A company can have more than one role from this list.
+2. Read the description and enrich it. Find the important words from the description and add synonyms to it or describe something
+more detailed if the original description supports it. Do not invent details that are not implied by the
+original description.
+Don't forget, the output should be just the content of the JSON file, nothing beside this, no explanations,
+no markdown formatting, no backticks, nothing else added, because this will go directly in the file!
