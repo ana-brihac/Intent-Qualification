@@ -31,10 +31,10 @@ def create(keys):
 	content=content.replace("{keys}", keys)
   
 	interaction=client.interactions.create(
-			model="gemini-3.8-flash",
-			input=content
-		)
-	
+		model="gemini-3.8-flash",
+		input=content
+	)
+
 	try:
 		jason=json.loads(interaction.output_text)
 	except json.JSONDecodeError:
