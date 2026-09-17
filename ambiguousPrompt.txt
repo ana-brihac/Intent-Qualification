@@ -1,0 +1,11 @@
+You are working on a machine learning algorithm that needs a JSON file with matched words, so it can be
+used later for the hard filter stage and the embedding stage for efficiency.
+Read the content of the user input from this, {userInput}, very carefully to get an idea of the situation.
+Here is the ambiguous data for {x} that I found using difflib: {data}. Each entry has a word and a list of
+candidates.
+Based on the user input, choose the candidate that fits best for each word.
+The output should look like this, as an example of the structure: {"roles": ["supplier"]} or
+{"fields": ["revenue"]}, depending on which one, {x}, we are resolving. Only include the chosen candidates,
+one per ambiguous word.
+Don't forget, the output should be just the content of the JSON file, nothing beside this, no explanations,
+no markdown formatting, no backticks, nothing else added, because this will go directly in the file!
