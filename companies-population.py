@@ -76,7 +76,7 @@ with open('companies.jsonl', 'r') as json_file:
 
 		interaction=client.interactions.create(
 			model="gemini-3.8-flash",
-			input=content
+			input=prompt
 		)
   
 		jason=json.loads(interaction.output_text)
@@ -98,5 +98,5 @@ with open('companies.jsonl', 'r') as json_file:
 		)
 
 		con.commit()
-
+  
 con.close()
