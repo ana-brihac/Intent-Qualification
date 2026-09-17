@@ -60,6 +60,12 @@ words, and look through our synonym tables to see which fields it matches, and w
 *What is the role?* The role is a label a company needs, whether it acts as a supplier, manufacturer,
 distributor, buyer, competitor, etc., in relation to whatever the query is asking about.
 
+**The files:**
+
+- **inputUser.py:** in this file we process the input. We take out the noise, the stop words, and tokenize the input. I chose **NLTK** instead of **spaCy**, because the input is not big and **NLTK** is better for small data. Then, we check the role and the fields against the tokens, but we don't use exact match logic (like strcmp), because the user input can have spelling errors. For this problem, I chose **difflib**. We check each word with the **get_close_matches** function against the list of possibilities from the JSON files from the previous step. If we check the roles for a word and we get more than one match, that becomes a trigger for the LLM. I implemented the same check for the fields too, so both go through the same ambiguity logic. Since this will be a rare case, it will not add much cost, so for accuracy we can rely on the **LLM's judgment** on those cases. We need a reverse lookup because for difflib we merge all the role synonyms into one flat list, so on its own it doesn't tell us which role a matched word belongs to. We look up the matched word in the JSON file to find out its role. The field part works the same way.
+- **inputParse.json:** the output of this stage. The fields we extract are what the hard filter stage will use next to know which columns to check for each query. The role, on the other hand, is not used by the hard filter, it is a signal that is used later, in the embedding and role-comparison stage.
+- **ambiguousPrompt.txt:** the prompt for the case where we have ambiguous results and we need a second pair of eyes for the perfect decision. Since there is no company data available at this stage, the only context we can give the LLM to resolve the ambiguity is the original user query itself, so this is what gets sent along with the ambiguous word and its candidates.
+
 ### Hard filter stage
 
 Because the embedding stage is an expensive one, we need to filter the data before it runs. We do this by
