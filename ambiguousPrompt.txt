@@ -4,8 +4,11 @@ Read the content of the user input from this, {userInput}, very carefully to get
 Here is the ambiguous data for {x} that I found using difflib: {data}. Each entry has a word and a list of
 candidates.
 Based on the user input, choose the candidate that fits best for each word.
+There can be more than one ambiguous word in the data. Resolve each one, and include all the resolved
+choices together in the same output list, one entry per ambiguous word, in the same order they appear
+in the data.
 The output should look like this, as an example of the structure: {"roles": ["supplier"]} or
-{"fields": ["revenue"]}, depending on which one, {x}, we are resolving. Only include the chosen candidates,
-one per ambiguous word.
+{"fields": ["revenue"]}, depending on which one, {x}, we are resolving. If there is more than one ambiguous
+word, the list should have more than one entry, for example {"roles": ["supplier", "manufacturer"]}.
 Don't forget, the output should be just the content of the JSON file, nothing beside this, no explanations,
 no markdown formatting, no backticks, nothing else added, because this will go directly in the file!
