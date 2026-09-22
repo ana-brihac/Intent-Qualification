@@ -72,6 +72,19 @@ Because the embedding stage is an expensive one, we need to filter the data befo
 reviewing the fields we considered relevant in the previous step. If a company doesn't have data in the
 related field, it is categorized as **3 (inconclusive)** and exits the pipeline early.
 
+**Files:**
+
+- **inputUser.py:** in this file we added a functionality that reads the input and, using **spaCy**, extracts
+the locations, dates, and values that will help us in the hard filter stage.
+- **inputParse.json:** this file holds the needed data.
+- **hardFilter.py:** the logic for filtering the data. We use the information from inputParse.json.
+- **candidates.json:** the output of the hard filter stage, the companies that pass the filter and the ones
+marked as inconclusive.
+
+**Additional install:**
+
+python -m spacy download en_core_web_sm
+
 ### Embedding system & role comparison
 
 Now we need to evaluate the filtered data. We have two stages here, computed separately, not merged into one score.
@@ -113,7 +126,6 @@ empty or almost empty answer.
 We need to compose a result for the user with the data we received from the last steps. We will attach in the
 message the list of the inconclusive companies and a list with the matching companies that our model found,
 in a pleasant design, not something too complicated, something in the terminal, but the user should understand it.
-
 
 ## Error Analysis
 
