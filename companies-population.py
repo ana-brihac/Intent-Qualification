@@ -15,88 +15,96 @@ con = sqlite3.connect("companies.sqlite")
 cur = con.cursor()
 
 cur.execute("""
-		CREATE TABLE IF NOT EXISTS COMPANIES (
-		website TEXT PRIMARY KEY,
-		operational_name TEXT,
-		year_founded INTEGER,
-		address TEXT,
-		employee_count INTEGER,
-		revenue INTEGER,
-		primary_naics TEXT,
-		secondary_naics TEXT,
-		description TEXT,
-		enriched_description TEXT,
-		business_model TEXT,
-		target_markets TEXT,
-		core_offerings TEXT,
-		is_public INTEGER,
-		role TEXT
-	)
+        CREATE TABLE IF NOT EXISTS COMPANIES (
+        website TEXT PRIMARY KEY,
+        operational_name TEXT,
+        year_founded INTEGER,
+        address TEXT,
+        employee_count INTEGER,
+        revenue INTEGER,
+        primary_naics TEXT,
+        secondary_naics TEXT,
+        description TEXT,
+        enriched_description TEXT,
+        business_model TEXT,
+        target_markets TEXT,
+        core_offerings TEXT,
+        is_public INTEGER,
+        role TEXT,
+        embedding TEXT
+    )
 """)
 
 with open('companies.jsonl', 'r') as json_file:
-	for json_str in json_file:
-		result = json.loads(json_str)
+    for json_str in json_file:
+        result = json.loads(json_str)
 
-		website = result.get('website')
-		operational_name = result.get('operational_name')
+        website = result.get('website')
+        operational_name = result.get('operational_name')
 
-		cur.execute(
-			"SELECT 1 FROM COMPANIES WHERE website = ? OR (website IS NULL AND operational_name = ?)",
-			(website, operational_name)
-		)
-		if cur.fetchone():
-			continue
+        cur.execute(
+            "SELECT 1 FROM COMPANIES WHERE website = ? OR (website IS NULL AND operational_name = ?)",
+            (website, operational_name)
+        )
+        if cur.fetchone():
+            continue
 
-		year_founded = result.get('year_founded')
-		address = result.get('address')
-		employee_count = result.get('employee_count')
-		revenue = result.get('revenue')
-		primary_naics = result.get('primary_naics')
-		secondary_naics = result.get('secondary_naics')
-		description = result.get('description')
-		business_model = result.get('business_model')
-		target_markets = result.get('target_markets')
-		core_offerings = result.get('core_offerings')
-		is_public = result.get('is_public')
-  
-		address_json = json.dumps(address) if address is not None else None
-		primary_naics_json = json.dumps(primary_naics) if primary_naics is not None else None
-		secondary_naics_json = json.dumps(secondary_naics) if secondary_naics is not None else None
-		business_model_json = json.dumps(business_model) if business_model is not None else None
-		target_markets_json = json.dumps(target_markets) if target_markets is not None else None
-		core_offerings_json = json.dumps(core_offerings) if core_offerings is not None else None
-		is_public_int = 1 if is_public else 0
+        year_founded = result.get('year_founded')
+        address = result.get('address')
+        employee_count = result.get('employee_count')
+        revenue = result.get('revenue')
+        primary_naics = result.get('primary_naics')
+        secondary_naics = result.get('secondary_naics')
+        description = result.get('description')
+        business_model = result.get('business_model')
+        target_markets = result.get('target_markets')
+        core_offerings = result.get('core_offerings')
+        is_public = result.get('is_public')
 
-		with open("populatePrompt.txt", "r") as f:
-				content=f.read()
-    
-		company_summary = json.dumps(result)
-		prompt = content.replace("{company}", company_summary)
+        address_json = json.dumps(address) if address is not None else None
+        primary_naics_json = json.dumps(primary_naics) if primary_naics is not None else None
+        secondary_naics_json = json.dumps(secondary_naics) if secondary_naics is not None else None
+        business_model_json = json.dumps(business_model) if business_model is not None else None
+        target_markets_json = json.dumps(target_markets) if target_markets is not None else None
+        core_offerings_json = json.dumps(core_offerings) if core_offerings is not None else None
+        is_public_int = 1 if is_public else 0
 
-		interaction=client.interactions.create(
-			model="gemini-3.8-flash",
-			input=prompt
-		)
-  
-		jason=json.loads(interaction.output_text)
+        with open("populatePrompt.txt", "r") as f:
+                content=f.read()
 
-		enriched_description=jason[enriched_description]
-		role=jason[role]
+        company_summary = json.dumps(result)
+        prompt = content.replace("{company}", company_summary)
 
-		cur.execute(
-			"""INSERT INTO COMPANIES (
-				website, operational_name, year_founded, address, employee_count,
-				revenue, primary_naics, secondary_naics, description, enriched_description,
-				business_model, target_markets, core_offerings, is_public, role
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-			(
-				website, operational_name, year_founded, address_json, employee_count,
-				revenue, primary_naics_json, secondary_naics_json, description, enriched_description,
-				business_model_json, target_markets_json, core_offerings_json, is_public_int, role
-			)
-		)
+        interaction=client.interactions.create(
+            model="gemini-3.8-flash",
+            input=prompt
+        )
 
-		con.commit()
-  
+        jason=json.loads(interaction.output_text)
+
+        enriched_description=jason["enriched_description"]
+        role=jason["role"]
+
+        embedding_response = client.models.embed_content(
+            model="gemini-embedding-2",
+            contents=enriched_description
+        )
+        embedding = embedding_response.embeddings
+        embedding_json = json.dumps(embedding)
+
+        cur.execute(
+            """INSERT INTO COMPANIES (
+                website, operational_name, year_founded, address, employee_count,
+                revenue, primary_naics, secondary_naics, description, enriched_description,
+                business_model, target_markets, core_offerings, is_public, role, embedding
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                website, operational_name, year_founded, address_json, employee_count,
+                revenue, primary_naics_json, secondary_naics_json, description, enriched_description,
+                business_model_json, target_markets_json, core_offerings_json, is_public_int, role, embedding_json
+            )
+        )
+
+        con.commit()
+
 con.close()
