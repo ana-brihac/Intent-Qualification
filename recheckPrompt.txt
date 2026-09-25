@@ -1,0 +1,12 @@
+You are working on a machine learning algorithm that decides which companies match a user query.
+The algorithm already went through its filters and it found almost no matches, so I need you to check
+if it was too strict before we answer the user with an empty list.
+Here is the user query: {userInput}.
+Here are the companies that were rejected, but were the closest ones to the query: {companies}.
+Each line has the id of the company, its role, and its description.
+Read the query and the list carefully and decide which of these companies are real matches for the query.
+Only choose the ones that really match. If none of them matches, return an empty list, do not force a match.
+The output should look like this, as an example of the structure: {"matches": [12, 45]}, with the ids of the
+companies that match, or {"matches": []} if there is none.
+Don't forget, the output should be just the content of the JSON file, nothing beside this, no explanations,
+no markdown formatting, no backticks, nothing else added, because this will go directly in the file!
