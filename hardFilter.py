@@ -3,6 +3,22 @@ import os, json
 import sqlite3
 import sys
 
+def build_condition(item, values):
+	if item['operator'] == "IN":
+		marks = ""
+
+		for one_value in item['value']:
+			if marks != "":
+				marks = marks + ", "
+
+			marks = marks + "?"
+			values.append(one_value)
+
+		return item['field'] + " IN (" + marks + ")"
+
+	values.append(item['value'])
+	return item['field'] + " " + item['operator'] + " ?"
+
 con = sqlite3.connect("companies.sqlite")
 cur = con.cursor()
 
@@ -12,38 +28,40 @@ companies = []
 inconclusive = []
 
 if len(content['extras']) == 0:
-	rows = cur.execute("SELECT website FROM COMPANIES")
+	rows = cur.execute("SELECT id FROM COMPANIES")
 
 	for row in rows:
 		companies.append(row[0])
 else:
 	conditions = []
+	maybe_conditions = []
 	values = []
 
 	for item in content['extras']:
-		conditions.append(item['field'] + " " + item['operator'] + " ?")
-		values.append(item['value'])
+		condition = build_condition(item, values)
+		conditions.append(condition)
+		maybe_conditions.append("(" + item['field'] + " IS NULL OR " + condition + ")")
 
 	where_clause = conditions[0]
 	for i in range(1, len(conditions)):
 		where_clause = where_clause + " AND " + conditions[i]
 
-	query = "SELECT website FROM COMPANIES WHERE " + where_clause
+	query = "SELECT id FROM COMPANIES WHERE " + where_clause
 	rows = cur.execute(query, values)
 
 	for row in rows:
 		companies.append(row[0])
 
-	null_cases = content['extras'][0]['field'] + " IS NULL"
+	maybe_clause = maybe_conditions[0]
+	for i in range(1, len(maybe_conditions)):
+		maybe_clause = maybe_clause + " AND " + maybe_conditions[i]
 
-	for i in range(1, len(content['extras'])):
-		null_cases = null_cases + " OR " + content['extras'][i]['field'] + " IS NULL"
+	maybe_query = "SELECT id FROM COMPANIES WHERE " + maybe_clause
+	maybe_rows = cur.execute(maybe_query, values)
 
-	null_query = "SELECT website FROM COMPANIES WHERE " + null_cases
-	null_rows = cur.execute(null_query)
-
-	for row in null_rows:
-		inconclusive.append(row[0])
+	for row in maybe_rows:
+		if row[0] not in companies:
+			inconclusive.append(row[0])
 
 result = open("candidates.json", "w")
 json.dump({"companies": companies, "inconclusive": inconclusive}, result)
