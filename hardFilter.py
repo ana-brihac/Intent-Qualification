@@ -1,7 +1,5 @@
-from pathlib import Path
-import os, json
+import json
 import sqlite3
-import sys
 
 def build_condition(item, values):
 	if item['operator'] == "IN":
