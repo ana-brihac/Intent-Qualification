@@ -1,11 +1,16 @@
 from google import genai
 from pathlib import Path
-import os, json
+import os, json, sys
 from dotenv import load_dotenv
+from llmCall import ask_llm
 
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+
+if GEMINI_API_KEY is None:
+	print("There is no GEMINI_API_KEY. Please create a .env file, the .env.example file shows how.")
+	sys.exit(1)
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -30,17 +35,8 @@ def create(keys):
   
 	content=content.replace("{keys}", keys)
   
-	interaction=client.interactions.create(
-		model="gemini-3.8-flash",
-		input=content
-	)
+	jason=ask_llm(client, content)
 
-	try:
-		jason=json.loads(interaction.output_text)
-	except json.JSONDecodeError:
-		print(f"Failed to parse JSON response for keys: {keys}")
-		print(interaction.output_text)
-		raise
 	return jason
 
 def expand(fileContent):
@@ -49,17 +45,8 @@ def expand(fileContent):
 
 	content=content.replace("{fileContent}", fileContent)
 
-	interaction=client.interactions.create(
-		model="gemini-3.8-flash",
-		input=content
-	)
+	jason=ask_llm(client, content)
 
-	try:
-		jason=json.loads(interaction.output_text)
-	except json.JSONDecodeError:
-		print(f"Failed to parse JSON response for keys: {fileContent}")
-		print(interaction.output_text)
-		raise
 	return jason
 
 
