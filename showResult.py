@@ -7,9 +7,6 @@ cur = con.cursor()
 file = open("embeddedResult.json")
 results = json.load(file)
 
-file2 = open("candidates.json")
-candidates_data = json.load(file2)
-
 file3 = open("inputParse.json")
 input_data = json.load(file3)
 
@@ -54,6 +51,12 @@ matches = []
 for item in results:
 	if item['decision'] == 0:
 		matches.append(item)
+
+inconclusive = []
+
+for item in results:
+	if item['decision'] == 3:
+		inconclusive.append(item)
 
 print("")
 print(separator())
@@ -104,21 +107,28 @@ else:
 
 print("")
 
-if len(candidates_data['inconclusive']) > 0:
-	print("  INCONCLUSIVE FIRMS (NOT ENOUGH DATA): " + str(len(candidates_data['inconclusive'])))
+if len(inconclusive) > 0:
+	print("  INCONCLUSIVE FIRMS (NOT ENOUGH DATA): " + str(len(inconclusive)))
 	print("  These companies pass every condition we could check, but a field the query")
 	print("  needs is empty for them, so we cannot say yes or no.")
+	print("  The closest ones to the query are first.")
 	print("")
 
 	shown = 0
 
-	for company_id in candidates_data['inconclusive']:
-		if shown < 15:
-			print("   - " + read_name(company_id))
+	for item in inconclusive:
+		if shown < 10:
+			name = item['name']
+
+			if name is None:
+				name = read_name(item['id'])
+
+			print("   - " + str(name))
 			shown = shown + 1
 
-	if len(candidates_data['inconclusive']) > 15:
-		print("   ... and " + str(len(candidates_data['inconclusive']) - 15) + " more")
+	if len(inconclusive) > 10:
+		left = len(inconclusive) - 10
+		print("   ... and " + str(left) + " more")
 
 	print("")
 

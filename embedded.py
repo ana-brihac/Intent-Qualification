@@ -1,5 +1,4 @@
 from google import genai
-from pathlib import Path
 import os, json, sys
 import sqlite3
 import math
@@ -179,6 +178,32 @@ if len(results) > 0 and (matches == 0 or (matches <= 2 and len(results) >= 20)):
 	for item in results:
 		if item['id'] in found:
 			item['decision'] = 0
+
+inconclusive_results = []
+
+for company_id in candidates_data['inconclusive']:
+	rows = cur.execute("SELECT embedding, role, enriched_description, operational_name FROM COMPANIES WHERE id = ?", (company_id,))
+
+	row = None
+	for one_row in rows:
+		row = one_row
+
+	company_embedding = json.loads(row[0])
+
+	inconclusive_results.append({
+		"id": company_id,
+		"name": row[3],
+		"similarity": cosine_similarity(query_embedding, company_embedding),
+		"role_match": False,
+		"decision": 3,
+		"role_text": row[1],
+		"description": row[2]
+	})
+
+inconclusive_results.sort(key=by_similarity, reverse=True)
+
+for item in inconclusive_results:
+	results.append(item)
 
 clean_results = []
 
