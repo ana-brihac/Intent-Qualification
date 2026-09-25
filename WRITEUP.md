@@ -242,11 +242,12 @@ The Scandinavian one is clearly the weak one. I think the reason is that this da
 renewable energy companies, so in that query almost everything looks similar to everything, and the
 embedding cannot separate a turbine manufacturer from a company that only installs or finances turbines.
 
-**The inconclusive list has no meaning by itself.** For "Clean energy startups founded after 2018 with fewer
-than 200 employees", 141 companies have no year and no employee count, so nothing can be checked for them
-and they all became inconclusive. The list starts with Unilever, OMV, Mercedes-Benz Trucks Romania and
-BambooHR, which are not clean energy startups at all. They are not wrong by the rule, they are just not
-useful to read.
+**The inconclusive list was strange at the beginning.** For the query with the clean energy startups, a lot
+of companies have no year and no employee count, so I cannot check anything for them and all of them went
+to the inconclusive list. The problem was that the list was starting with Unilever and OMV, and those are
+not startups at all. They are not wrong, because I really cannot say no for them, but it is strange to read.
+So now I compare these companies with the query too, and I show only the first ten. They already have their
+embedding saved, so this does not cost me anything more.
 
 **The same company appears twice.** Versar is in the database two times, and ENERCON and Enercon are two
 different rows. My check removes a company when the website is the same, or when the name is the same and
