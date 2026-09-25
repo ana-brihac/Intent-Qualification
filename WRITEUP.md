@@ -12,20 +12,20 @@ of failure than an LLM, but I integrated trigger points for these moments, and t
 
 ```mermaid
 graph TD;
-    A["Populate the database"]-->B;
-    B["User input processing"]-->C;
-    C["Hard filter stage"]-->D;
-    D["Embedding system \n& \n Role comparison"]-->E;
-    E["Scoring stage"] --> F;
-    F["LLM fallback triggers"] --> G["Response composer"]
+	A["Populate the database"]-->B;
+	B["User input processing"]-->C;
+	C["Hard filter stage"]-->D;
+	D["Embedding system \n& \n Role comparison"]-->E;
+	E["Scoring stage"] --> F;
+	F["LLM fallback triggers"] --> G["Response composer"]
 
-    style A fill:#EB7B67,stroke:#333,stroke-width:2px
-    style B fill:#EB7B67,stroke:#333,stroke-width:2px
-    style C fill:#EB7B67,stroke:#333,stroke-width:2px
-    style D fill:#EB7B67,stroke:#333,stroke-width:2px
-    style E fill:#EB7B67,stroke:#333,stroke-width:2px
-    style F fill:#EB7B67,stroke:#333,stroke-width:2px
-    style G fill:#EB7B67,stroke:#333,stroke-width:2px
+	style A fill:#EB7B67,stroke:#333,stroke-width:2px
+	style B fill:#EB7B67,stroke:#333,stroke-width:2px
+	style C fill:#EB7B67,stroke:#333,stroke-width:2px
+	style D fill:#EB7B67,stroke:#333,stroke-width:2px
+	style E fill:#EB7B67,stroke:#333,stroke-width:2px
+	style F fill:#EB7B67,stroke:#333,stroke-width:2px
+	style G fill:#EB7B67,stroke:#333,stroke-width:2px
 ```
 
 ### Populate the database
@@ -148,13 +148,13 @@ The strongest submissions show deep reflection about the problem and solution.
 
 Ask yourself questions such as:
 
-    Where does my system work extremely well?
-    Where does it fail?
-    What assumptions did I make?
-    How robust is the system to missing data?
-    How well would this scale to millions of companies?
-    What improvements would I prioritise next?
-    What signals does the system rely on most heavily?
-    When might those signals be misleading?
+	Where does my system work extremely well?
+	Where does it fail?
+	What assumptions did I make?
+	How robust is the system to missing data?
+	How well would this scale to millions of companies?
+	What improvements would I prioritise next?
+	What signals does the system rely on most heavily?
+	When might those signals be misleading?
 
 Understanding the limits of your approach is as important as demonstrating its strengths.
