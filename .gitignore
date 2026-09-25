@@ -2,3 +2,7 @@
 __pycache__/
 .git
 .venv/
+companies.sqlite
+inputParse.json
+candidates.json
+embeddedResult.json
