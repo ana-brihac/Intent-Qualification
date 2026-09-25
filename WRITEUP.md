@@ -46,11 +46,14 @@ a JSON file, and it gets loaded into a hash table in memory when we run the prog
 - **.env:** this is where the API key is staying
 - **companies.jsonl:** the companies data from where we will extract the tables, the input data
 - **companies-population.py**: it will created the database table if this not exist and then will populate it looping through the companies list. In the looping process we need to check if the company is already in the table, because by this we will save time and tokens. We will check this by reviewing the "website" field, and the "operational_name" field if the website is null. The operational_name has a small chance of being the same for two companies, so we don't rely on it as the first check, it is just a backup verification.
+The embedding is not made only from the enriched description, the business model, the target markets and the core offerings are added to the text too, because those fields already hold the words that the queries ask about, like "Software-as-a-Service" or "E-commerce". The country code is also saved in its own column, because SQL cannot look inside the JSON of the address.
 - **synonyms.py:** containt the script for the role and field tables verification and extansion. Just one script for both, because the task has the same purpose.
 - **fields.json:** contains the synonyms of the fields, but not all of them, just the ones that make sense. For example, operational_name and website are identifier fields, so we are not going to use synonyms for them in this file.
 - **roles.json:** the JSON file where the script will add the role synonyms for each company.
 - **expandPrompt.txt & createPropmpt.txt:** contains the prompts for the LLM from synonyms.py
 - **populatePrompt.txt:** contains the prompts for the LLM from companies-population.py
+- **llmCall.py:** all the LLM calls go through one function here. It retries when the API answers with a rate limit or a temporary error, and it reads the JSON answer in one place instead of repeating the same code in four scripts. The population is 456 calls one after the other, so one failed call in the middle should not stop everything.
+- **countries.json:** the country and region names that a user can write, mapped to the country code that is stored in the database. The address field only keeps the country code, like "ro" or "ch", so without this file a query that says "Romania" can never match anything.
 
 ### User input processing
 
@@ -69,8 +72,19 @@ distributor, buyer, competitor, etc., in relation to whatever the query is askin
 ### Hard filter stage
 
 Because the embedding stage is an expensive one, we need to filter the data before it runs. We do this by
-reviewing the fields we considered relevant in the previous step. If a company doesn't have data in the
-related field, it is categorized as **3 (inconclusive)** and exits the pipeline early.
+reviewing the fields we considered relevant in the previous step. A company is marked
+**3 (inconclusive)** when it passes every condition that we can actually check, but a field that the query
+needs is empty for it. It is not refused, it is only shown separately at the end, because "we do not know"
+is a different answer from "no".
+
+My first version of this was wrong. It was asking the database two separate questions, one for the
+conditions and one for the empty fields, and the second question did not know anything about the first one.
+For the query "Construction companies in the United States with revenue over 50 million" it was reporting
+82 companies as inconclusive, and most of them were French, German or Chinese companies that only had an
+empty revenue. They fail the country condition for sure, so they are a "no", not a "maybe". Now the two
+questions are built together, one condition at a time, "the revenue is empty OR the revenue is bigger than
+the value", and the real matches are removed at the end, so what is left is only the companies that we
+really cannot decide.
 
 **Files:**
 
@@ -101,60 +115,200 @@ for the query.
 
 ### Scoring stage
 
-In this stage we combine the signals from the previous stage and categorize it with:
+In this stage we put together the signals from the previous stage and we give every company a label:
 
-- 0 (match)
-- 1 (debatable)
-- 2 (no match)
+- **0 (match)**
+- **1 (not a match)**
+- **3 (inconclusive)**, the ones that the hard filter put aside because a field was empty
 
-Companies that did not reach this stage, because they exited early at the hard filter, keep
-their **3 (inconclusive)** label from that step.
+My first idea was to compare the similarity with two fixed numbers, 0.4 and 0.7, and to send to the LLM
+everything that was in the middle. After I ran it on the real data I saw that this does not work. The
+similarities are all very close to each other, almost all of them are between 0.5 and 0.7, so almost every
+company was falling in the middle band, and the LLM would have been called for all of them.
+
+I also saw that the numbers move from one query to another. For one query the best company is at 0.69 and
+for another one it is at 0.75, so with a fixed 0.7 the first query finds zero matches and the second one
+finds a lot, and this has nothing to do with the answer being good or bad. What is good is the **order** of
+the companies, the best ones are really at the top.
+
+So I do not compare with a fixed number anymore, I compare with the **best score of that query**:
+
+- very close to the best one, it is a match
+- a little further, it is debatable, and the LLM decides
+- further than that, it is not a match
+
+I also tried to take a percentage of the list, like the best 10%, but it was worse, because the number of
+real matches does not depend on how many companies passed the filter.
 
 ### LLM fallback triggers
 
-We have two trigger points here. 
-- If the score is **1, debatable**, or if the role and embedding signals did not
-agree on the same company, for example high embedding similarity but a role that does not match, that means
-we hit a trigger point, so we need a second pair of eyes, the LLM, for the final result on those firms.
--  The
-second trigger is when a query comes back with very few or zero results from the whole candidate pool, because
-that could mean the pipeline was too strict somewhere, so the LLM checks again before we give the user an
-empty or almost empty answer.
+We have two trigger points here.
+
+- The first one is a company that the algorithm cannot decide alone, when it is in the debatable zone, or
+when the two signals do not agree, for example a high similarity but a role that does not match. These
+calls are limited to 10 for one query. The list is sorted, so the calls go to the companies that are really
+on the border, and the ones under them are a no anyway.
+- The second one is when the query comes back with almost nothing. That can mean the pipeline was too strict
+somewhere, so before we answer the user with an empty list we send **one** call with the closest rejected
+companies and we ask the LLM if some of them are matches. One call, not one call for each company.
+
+I also check the roles of the query against the roles that really exist in the database. The LLM gave the
+role competitor to almost no company, so a query that asks for competitors would find no role match
+anywhere, every company would look like a disagreement, and the LLM would be called for all of them. A role
+that is not in the database is dropped.
+
+If the LLM cannot be reached, because of the daily limit for example, the company stays out of the matches
+and the query still gives an answer. Before, one failed call was stopping the whole query.
 
 ### Response composer
 
-We need to compose a result for the user with the data we received from the last steps. We will attach in the
-message the list of the inconclusive companies and a list with the matching companies that our model found,
-in a pleasant design, not something too complicated, something in the terminal, but the user should understand it.
+We need to compose a result for the user with the data we received from the last steps. We print the
+companies that matched, with their similarity, and after them, in their own section, the inconclusive firms,
+because "we do not know" is not the same answer as "no". Nothing too complicated, just the terminal, but the
+user should understand it.
+
+**The files:**
+
+- **showResult.py:** prints the answer.
+- **solution.py:** runs the four stages one after the other, so everything is one command.
 
 ## Error Analysis
 
-Where does your system struggle?
+**The synonym matching was matching too much.** I used `difflib.get_close_matches` with its default cutoff,
+0.6, and on the real queries it was giving things like this:
 
-Show concrete examples of companies it misclassifies and explain why.
+| word in the query | matched | ratio | it became |
+| --- | --- | --- | --- |
+| companies | compete | 0.62 | role competitor |
+| united | listed | 0.67 | field is_public |
+| states | started | 0.77 | field year_founded |
+| construction | distribution | 0.67 | role distributor |
+| software | store | 0.62 | role retailer |
+
+The word "companies" is in almost every query, so almost every query was asking for the role competitor.
+And "united", from "the United States", was making the system filter only the public companies, which
+throws away every private construction company. The real matches are at 0.94 and above, employees is 1.00,
+employee is 0.94, public is 1.00, so there is a clear space between the good ones and the bad ones and I
+raised the cutoff to 0.85. The typos still work, manufaturer, distribtor, employes and suplier are all
+still found, which was the reason I chose difflib from the beginning.
+
+**spaCy said that Shopify is a country.** In "E-commerce companies using Shopify or similar platforms",
+spaCy gives Shopify the label GPE, the same label as Romania or France. The old code was building a filter
+for the address equal to "Shopify", and that finds nothing. Now a location is used only if the name exists
+in countries.json, so Shopify is ignored and the query goes to the embedding with all the companies. The
+same protection is what makes "California" harmless, it is not in the file, so it does not filter, but it
+does not help either.
+
+**The numbers were not numbers.** The values were coming out of spaCy as text, like "$50 million" or
+"more than 1,000". In SQLite, when a text value cannot be turned into a number, the comparison is made by
+type, and a number is always smaller than a text, so "revenue > $50 million" matches **nothing** and
+"revenue < $50 million" matches **everything**. The second one is worse than a crash, because it looks like
+an answer. Also spaCy puts the operator inside the entity, "more than 1,000" is one single entity, so
+looking only at the two words before it was finding no operator and the condition was thrown away. And the
+operator words are compared as whole words now, because "turnover" contains "over", so "turnover below 50
+million" was being read as bigger than.
+
+**The role signal is weaker than I thought.** This is how the 456 companies were labelled:
+
+| role | companies |
+| --- | --- |
+| service_provider | 392 |
+| manufacturer | 301 |
+| supplier | 227 |
+| distributor | 121 |
+| retailer | 78 |
+| wholesaler | 2 |
+| buyer | 2 |
+| competitor | 1 |
+
+service_provider is on 86% of the companies, so it almost never separates anything. And buyer and competitor
+are almost empty, and I think this is not the fault of the model. A company is not a competitor alone, it is
+a competitor **to something**, and at the population there is no query yet, so the question cannot really be
+answered there. My prompt even asks for the role "in relation to whatever the query is asking about", which
+is impossible at that moment. wholesaler is also not one of my seven roles, the model invented it for 2
+companies even if the prompt says not to.
+
+**Where the ranking is not good enough.** I took the queries where I can build the answer from the
+structured data, the country and the NAICS label, and I looked at the position of the real matches:
+
+| query | precision in the first 10 | worst position of a real match |
+| --- | --- | --- |
+| logistics in Romania | 100% | 26 |
+| food and beverage in France | 90% | 21 |
+| pharmaceutical in Switzerland | 90% | 34 |
+| renewable equipment in Scandinavia | 40% | 73 |
+
+The Scandinavian one is clearly the weak one. I think the reason is that this dataset is full of wind and
+renewable energy companies, so in that query almost everything looks similar to everything, and the
+embedding cannot separate a turbine manufacturer from a company that only installs or finances turbines.
+
+**The inconclusive list has no meaning by itself.** For "Clean energy startups founded after 2018 with fewer
+than 200 employees", 141 companies have no year and no employee count, so nothing can be checked for them
+and they all became inconclusive. The list starts with Unilever, OMV, Mercedes-Benz Trucks Romania and
+BambooHR, which are not clean energy startups at all. They are not wrong by the rule, they are just not
+useful to read.
+
+**The same company appears twice.** Versar is in the database two times, and ENERCON and Enercon are two
+different rows. My check removes a company when the website is the same, or when the name is the same and
+the website is empty, and these ones pass through it because they have two different websites.
 
 ## Scaling
 
-If the system needed to handle 100,000 companies per query instead of 500, what would you change?
+If the database had 100,000 companies instead of 500, some parts still work and some parts break.
+
+**The population becomes very expensive.** It is one LLM call and one embedding call for every company, so
+for 100,000 companies it is 200,000 calls. For 456 companies it already took around 40 minutes and it used
+almost all the calls that the free tier gives for one day. So this part needs a paid tier and the requests
+sent in parallel, or a batch API. The good part is that it is paid only **one time**, because everything is
+stored, and my script already skips the companies that are already inside, so later only the new companies
+cost something.
+
+**The similarity computation breaks.** I wrote the cosine similarity by hand, with a simple loop, and one
+embedding has 3072 numbers. For 456 companies it is fast enough, but for 100,000 companies it would be
+hundreds of millions of multiplications for every query, in Python, while the user is waiting. This needs a
+real vector search, numpy at least, and better a library that does not compare everything, like FAISS or an
+SQLite extension for vectors.
+
+**The database becomes too big.** I keep the embedding as text, and that is around 42 KB for one company.
+For 100,000 companies that is a few GB only for the vectors. Saving the numbers in binary instead of text is
+a few times smaller, and the model can also return a smaller embedding.
+
+**The hard filter is the part that scales well.** It is one SQL query, and SQLite is fine with it, it only
+needs indexes on the columns that are filtered. It also becomes more important, because the more work the
+cheap filter does, the less work the expensive part has to do.
+
+**One thing in my scoring has to change.** I compare with the best score of the query, and to know the best
+score I compute all the similarities and I sort them. With 100,000 companies I cannot do that, so I would
+ask the vector index for the best 200 companies and measure the margin only inside that list. The companies
+far away were not going to be matches anyway.
+
+**What does not change.** The number of LLM calls for one query stays the same, 10 and one more for the
+recheck, if the database has 500 companies or 100,000. This is the part of the design I would keep.
 
 ## Failure Modes
 
-When might your system produce confident but incorrect results?
+**When there is no real match at all.** The threshold is measured from the best company of the query, so the
+system always believes that the best one is a match. If I ask for pharmaceutical companies in Romania and
+there is none, the best Romanian company is still returned. The answer looks exactly like a correct one, and
+my second trigger does not catch it, because that one looks for too few results, not for wrong ones.
 
-What would you monitor in production to detect these failures?
-Critical Thinking
+**Because the similarities are very close.** The difference between the first and the second company is
+often very small, so a small change in a description can change who is inside the margin and who is not. The
+order is good, but the border between match and not a match is not solid.
 
-The strongest submissions show deep reflection about the problem and solution.
+**When the description is poor.** Everything after the hard filter depends on the enriched description, and
+it was written once, at the population. If the original description is short or vague, the company will be
+badly placed for every query, and I never check it again.
 
-Ask yourself questions such as:
+**When the query asks for something that is not in the data.** "Fast-growing", "B2B", "using Shopify" are
+not fields. The system answers with the part that it understood and says nothing about the rest.
 
-	Where does my system work extremely well?
-	Where does it fail?
-	What assumptions did I make?
-	How robust is the system to missing data?
-	How well would this scale to millions of companies?
-	What improvements would I prioritise next?
-	What signals does the system rely on most heavily?
-	When might those signals be misleading?
+**When the data is missing.** Many companies have no employee count and no founding year, so for some queries
+a big part of the database cannot be decided. I show them separately, but a user who reads only the matches
+does not see them.
 
-Understanding the limits of your approach is as important as demonstrating its strengths.
+**What I would watch in production.** For every query I would save how many companies passed the filter, how
+many matched, the best similarity and how many LLM calls were made. Then I would watch if the queries with
+zero matches are growing, if the inconclusive ones are growing, and how often the LLM does not agree with my
+thresholds, because that tells me if the thresholds are still good. And I would read a few queries by hand
+every week, because no number can tell me that a confident answer was wrong.
