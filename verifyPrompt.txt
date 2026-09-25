@@ -1,0 +1,10 @@
+You are working on a machine learning algorithm that decides whether a company matches a user query.
+Here is the user query: {userInput}.
+Here is the company's enriched description: {description}.
+Here is the company's role(s): {role}.
+The company's similarity score to the query was {similarity}, and the role comparison was {role_match}.
+This case is ambiguous, so I need your judgment on the final decision.
+Decide if this company is a match (0) or not a match (1) for the query.
+The output should look like this, as an example of the structure: {"decision": 0} or {"decision": 1}.
+Don't forget, the output should be just the content of the JSON file, nothing beside this, no explanations,
+no markdown formatting, no backticks, nothing else added, because this will go directly in the file!
