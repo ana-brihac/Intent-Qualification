@@ -8,7 +8,7 @@ def ask_llm(client, prompt):
 	while attempt < 5:
 		try:
 			interaction = client.interactions.create(
-				model="gemini-2.5-flash-lite",
+				model="gemini-3.5-flash-lite",
 				input=prompt
 			)
 			output_text = interaction.output_text
@@ -19,6 +19,10 @@ def ask_llm(client, prompt):
 			return json.loads(output_text)
 		except Exception as error:
 			attempt = attempt + 1
+
+			if "per day" in str(error):
+				print("The daily limit for the model is finished, I cannot ask the LLM anymore.")
+				raise
 
 			if attempt == 5:
 				print("The last answer from the model was:")

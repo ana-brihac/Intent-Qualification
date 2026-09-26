@@ -67,7 +67,14 @@ def cosine_similarity(vec1, vec2):
 
 	return dot_product / (norm1 * norm2)
 
+llm_is_down = False
+
 def llm_verify(company_id, description, role, similarity_score, role_match):
+	global llm_is_down
+
+	if llm_is_down == True:
+		return 1
+
 	prompt_file = open("verifyPrompt.txt")
 	content = prompt_file.read()
 
@@ -81,10 +88,16 @@ def llm_verify(company_id, description, role, similarity_score, role_match):
 		jason = ask_llm(client, prompt)
 		return jason["decision"]
 	except Exception as error:
+		llm_is_down = True
 		print("The LLM could not be reached (" + str(error)[:80] + "), keeping this company out of the matches")
 		return 1
 
 def llm_recheck(rejected):
+	global llm_is_down
+
+	if llm_is_down == True:
+		return []
+
 	prompt_file = open("recheckPrompt.txt")
 	content = prompt_file.read()
 
@@ -100,6 +113,7 @@ def llm_recheck(rejected):
 		jason = ask_llm(client, prompt)
 		return jason["matches"]
 	except Exception as error:
+		llm_is_down = True
 		print("The LLM could not be reached (" + str(error)[:80] + "), keeping the result as it is")
 		return []
 
