@@ -30,6 +30,21 @@ def read_name(company_id):
 
 	return "unknown company"
 
+def read_country(company_id):
+	rows = cur.execute("SELECT country_code FROM COMPANIES WHERE id = ?", (company_id,))
+
+	row = None
+	for one_row in rows:
+		row = one_row
+
+	if row is None:
+		return "unknown"
+
+	if row[0] is None:
+		return "unknown"
+
+	return row[0]
+
 def pad(text, size):
 	result = text
 
@@ -58,6 +73,23 @@ for item in results:
 	if item['decision'] == 3:
 		inconclusive.append(item)
 
+checked = len(results) - len(inconclusive)
+
+unique_matches = []
+already_shown = []
+
+for item in matches:
+	name = item['name']
+
+	if name is None:
+		name = read_name(item['id'])
+
+	key = str(name).lower() + " " + read_country(item['id'])
+
+	if key not in already_shown:
+		already_shown.append(key)
+		unique_matches.append(item)
+
 print("")
 print(separator())
 print("  " + input_data['raw_query'])
@@ -81,16 +113,16 @@ if len(input_data['roles']) > 0:
 	print("  Roles asked by the query: " + ", ".join(input_data['roles']))
 	print("")
 
-if len(matches) == 0:
+if len(unique_matches) == 0:
 	print("  NO MATCHES")
-	print("  " + str(len(results)) + " companies were checked and none of them matched the query.")
+	print("  " + str(checked) + " companies were checked and none of them matched the query.")
 else:
-	print("  MATCHES: " + str(len(matches)) + " out of " + str(len(results)) + " companies checked")
+	print("  MATCHES: " + str(len(unique_matches)) + " out of " + str(checked) + " companies checked")
 	print("")
 
 	number = 0
 
-	for item in matches:
+	for item in unique_matches:
 		number = number + 1
 
 		name = item['name']
