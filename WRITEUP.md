@@ -249,9 +249,14 @@ not startups at all. They are not wrong, because I really cannot say no for them
 So now I compare these companies with the query too, and I show only the first ten. They already have their
 embedding saved, so this does not cost me anything more.
 
-**The same company appears twice.** Versar is in the database two times, and ENERCON and Enercon are two
-different rows. My check removes a company when the website is the same, or when the name is the same and
-the website is empty, and these ones pass through it because they have two different websites.
+**The same company appears more than once.** Sesame HR is in the data four times, with four different
+websites, and Rompetrol and Versar are there two times. My check in the population removes a company when
+the website is the same, or when the name is the same and the website is empty, so these ones pass through
+it. For the query with the HR companies this was ugly, because Sesame HR was taking four places out of ten
+in the answer. I did not delete them from the database, because I want to keep everything that came from the
+input file, but when I print the answer I show a company only one time. I compare the name and the country
+together, and not only the name, because Decathlon France and Decathlon Italy really are two different
+companies.
 
 ## Scaling
 
